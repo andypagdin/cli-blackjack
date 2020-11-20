@@ -6,7 +6,11 @@ import (
 	"time"
 )
 
-var deck = [...]string{"Ah", "2h", "3h", "4h", "5h", "6h", "7h", "8h", "9h", "10h", "Jh", "Qh", "Kh", "As", "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", "10s", "Js", "Qs", "Ks", "Ad", "2d", "3d", "4d", "5d", "6d", "7d", "8d", "9d", "10d", "Jd", "Qd", "Kd", "Ac", "2c", "3c", "4c", "5c", "6c", "7c", "8c", "9c", "10c", "Jc", "Qc", "Kc"}
+var deck = [...]string{
+	"Ah", "2h", "3h", "4h", "5h", "6h", "7h", "8h", "9h", "10h", "Jh", "Qh", "Kh",
+	"As", "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", "10s", "Js", "Qs", "Ks",
+	"Ad", "2d", "3d", "4d", "5d", "6d", "7d", "8d", "9d", "10d", "Jd", "Qd", "Kd",
+	"Ac", "2c", "3c", "4c", "5c", "6c", "7c", "8c", "9c", "10c", "Jc", "Qc", "Kc"}
 
 var value = map[string]int{
 	"Ah": 11, "2h": 2, "3h": 3, "4h": 4, "5h": 5, "6h": 6, "7h": 7, "8h": 8, "9h": 9, "10h": 10, "Jh": 10, "Qh": 10, "Kh": 10,
@@ -46,7 +50,6 @@ func newHand(balance float64) {
 
 	if playerResult == 21 {
 		fmt.Println("21! good for you")
-		fmt.Println("--------------------")
 		newHand(balance + (((bet * 3) / 2) + bet))
 	}
 
@@ -62,7 +65,7 @@ func newHand(balance float64) {
 	}
 }
 
-// 0 = dealer loose
+// 0 = dealer lose
 // 1 = dealer win
 // 3 = push
 func playDealerHand(hand []string, total int, playerResult int) int {
