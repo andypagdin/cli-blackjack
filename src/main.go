@@ -36,77 +36,74 @@ func newHand(balance float64) {
 	fmt.Printf("Balance £%0.2f\n", balance)
 
 	bet := promptForBet(balance)
-	fmt.Println("--------------------")
 
 	dealer, dtotal := dealHand(2)
 	player, ptotal := dealHand(2)
 
 	fmt.Printf("Dealer shows [%s]\n", dealer[0])
-	playerResult := playPlayerHand(player, ptotal)
+	playerResult, isBust := playPlayerHand(player, ptotal)
 
-	if playerResult == 0 {
+	if isBust {
 		newHand(balance - bet)
 	}
 
 	if playerResult == 21 {
-		fmt.Println("21! good for you")
+		fmt.Println("Player wins with 21!")
 		newHand(balance + (((bet * 3) / 2) + bet))
 	}
 
 	dealerResult := playDealerHand(dealer, dtotal, playerResult)
-
-	switch dealerResult {
-	case 0:
-		newHand(balance + ((bet / 2) * 2))
-	case 1:
-		newHand(balance - bet)
-	default:
-		newHand(balance)
-	}
+	newHand(balanceCalc(dealerResult, bet, balance))
 }
 
-// 0 = dealer lose
-// 1 = dealer win
-// 3 = push
-func playDealerHand(hand []string, total int, playerResult int) int {
-	var result int
+func balanceCalc(dealerResult string, bet float64, balance float64) float64 {
+	switch dealerResult {
+	case "player":
+		balance += ((bet / 2) * 2)
+	case "dealer":
+		balance -= bet
+	}
+	return balance
+}
+
+func playDealerHand(hand []string, total int, playerResult int) string {
+	var winner string
+	var value int
 
 	for {
 		fmt.Printf("Dealer shows %v - total %d\n", hand, total)
 		if total > 21 {
 			fmt.Printf("Dealer bust! %d\n", total)
-			result = 0
+			winner = "player"
 			break
 		}
 
 		if total >= 17 {
 			if total > playerResult {
 				fmt.Printf("Dealer wins! %d\n", total)
-				result = 1
+				winner = "dealer"
 			} else if total == playerResult {
 				fmt.Println("Push! bets returned")
-				result = 3
 			} else {
 				fmt.Printf("Player wins! %d against %d\n", playerResult, total)
-				result = 0
+				winner = "player"
 			}
 			break
 		}
 
 		if total < 17 {
-			card := deck[rand.Intn(len(deck))]
-			hand = append(hand, card)
-			// todo: count ace as 1 when hitting into
-			total = total + value[card]
+			hand, _, value = dealCard(hand)
+			total += value
 		}
 	}
 
-	return result
+	return winner
 }
 
-// 0 = bust
-func playPlayerHand(hand []string, total int) int {
-	var choice string
+func playPlayerHand(hand []string, total int) (int, bool) {
+	var card, choice string
+	var value int
+	isBust := false
 
 	for {
 		fmt.Printf("You show %v - total %d\n", hand, total)
@@ -118,51 +115,55 @@ func playPlayerHand(hand []string, total int) int {
 		}
 
 		if choice == "h" {
-			// todo: if the card is already in the players hand redraw another
-			card := deck[rand.Intn(len(deck))]
-			// todo: count ace as 1 when hitting into
-			value := value[card]
-			newTotal := total + value
+			hand, card, value = dealCard(hand)
+			total += value
 
-			if newTotal > 21 {
-				fmt.Printf("Drew %s %v Total %d - Bust!\n", card, hand, newTotal)
-				total = 0
+			if total > 21 {
+				fmt.Printf("Drew %s %v Total %d - Bust!\n", card, hand, total)
+				isBust = true
 				break
 			}
-
-			hand = append(hand, card)
-			total = newTotal
 		} else if choice == "s" {
 			break
 		}
 	}
 
-	return total
+	return total, isBust
 }
 
 func dealHand(count int) ([]string, int) {
 	var hand []string
-	var total int
+	var total, value int
 
 	for i := 0; i < count; i++ {
-		card := deck[rand.Intn(len(deck))]
-		hand = append(hand, card)
-		total += value[card]
+		hand, _, value = dealCard(hand)
+		total += value
 	}
 
 	return hand, total
 }
 
+func dealCard(hand []string) ([]string, string, int) {
+	// todo: if the card is already in the players hand redraw another
+	// todo: count ace as 1 when hitting into
+	card := deck[rand.Intn(len(deck))]
+	hand = append(hand, card)
+	value := value[card]
+	return hand, card, value
+}
+
 func promptForBet(balance float64) float64 {
 	var bet float64
 
-	fmt.Print("Enter bet amount £")
-	_, scnerr := fmt.Scanf("%f\n", &bet)
+	for {
+		fmt.Print("Enter bet amount £")
+		_, scnerr := fmt.Scanf("%f\n", &bet)
 
-	// todo: explore better solutions to handling invalid input
-	if scnerr != nil || bet > balance || bet <= 0 {
-		fmt.Println("Invalid bet")
-		return promptForBet(balance)
+		if scnerr != nil || bet > balance || bet <= 0 {
+			fmt.Println("Invalid bet")
+		} else {
+			break
+		}
 	}
 
 	return bet
