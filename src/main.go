@@ -28,42 +28,41 @@ func main() {
 }
 
 func newHand(balance float64) {
-	if balance <= 0 {
-		fmt.Println("You've gone bust, gutted.")
-		return
+	for {
+		if balance <= 0 {
+			fmt.Println("You've gone bust, gutted.")
+			break
+		}
+
+		fmt.Printf("Balance £%0.2f\n", balance)
+		bet := promptForBet(balance)
+
+		dealer, dtotal := dealHand(2)
+		player, ptotal := dealHand(2)
+
+		fmt.Printf("Dealer shows [%s]\n", dealer[0])
+		playerResult, isBust := playPlayerHand(player, ptotal)
+
+		if isBust {
+			balance -= bet
+			continue
+		}
+
+		if playerResult == 21 {
+			fmt.Println("Player wins with 21!")
+			balance += (((bet * 3) / 2) + bet)
+			continue
+		}
+
+		dealerResult := playDealerHand(dealer, dtotal, playerResult)
+
+		switch dealerResult {
+		case "player":
+			balance += ((bet / 2) * 2)
+		case "dealer":
+			balance -= bet
+		}
 	}
-
-	fmt.Printf("Balance £%0.2f\n", balance)
-
-	bet := promptForBet(balance)
-
-	dealer, dtotal := dealHand(2)
-	player, ptotal := dealHand(2)
-
-	fmt.Printf("Dealer shows [%s]\n", dealer[0])
-	playerResult, isBust := playPlayerHand(player, ptotal)
-
-	if isBust {
-		newHand(balance - bet)
-	}
-
-	if playerResult == 21 {
-		fmt.Println("Player wins with 21!")
-		newHand(balance + (((bet * 3) / 2) + bet))
-	}
-
-	dealerResult := playDealerHand(dealer, dtotal, playerResult)
-	newHand(balanceCalc(dealerResult, bet, balance))
-}
-
-func balanceCalc(dealerResult string, bet float64, balance float64) float64 {
-	switch dealerResult {
-	case "player":
-		balance += ((bet / 2) * 2)
-	case "dealer":
-		balance -= bet
-	}
-	return balance
 }
 
 func playDealerHand(hand []string, total int, playerResult int) string {
@@ -91,10 +90,8 @@ func playDealerHand(hand []string, total int, playerResult int) string {
 			break
 		}
 
-		if total < 17 {
-			hand, _, value = dealCard(hand)
-			total += value
-		}
+		hand, _, value = dealCard(hand)
+		total += value
 	}
 
 	return winner
@@ -103,11 +100,10 @@ func playDealerHand(hand []string, total int, playerResult int) string {
 func playPlayerHand(hand []string, total int) (int, bool) {
 	var card, choice string
 	var value int
-	isBust := false
 
 	for {
 		fmt.Printf("You show %v - total %d\n", hand, total)
-		fmt.Print("Hit (h) or Stand (s) ")
+		fmt.Print("Hit or Stand (h/s) ")
 		_, err := fmt.Scanf("%s\n", &choice)
 
 		if err != nil {
@@ -120,15 +116,14 @@ func playPlayerHand(hand []string, total int) (int, bool) {
 
 			if total > 21 {
 				fmt.Printf("Drew %s %v Total %d - Bust!\n", card, hand, total)
-				isBust = true
-				break
+				return 0, true
 			}
 		} else if choice == "s" {
 			break
 		}
 	}
 
-	return total, isBust
+	return total, false
 }
 
 func dealHand(count int) ([]string, int) {
